@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -18,15 +19,20 @@ type DBStruct struct {
 }
 
 func BulkInsert(resc []DBStruct, db *sql.DB) {
-	ins, err := db.Prepare("INSERT INTO sample(id,name,createdAt) VALUES(?,?,?)")
-	if err != nil {
-		log.Println(err)
-	}
+	rescInterface := []interface{}{}
+	stmt := "INSERT INTO sample(id, name, createdAt) VALUES"
+
 	for _, value := range resc {
-		fmt.Println(value)
-		ins.Exec(value.id, value.name, value.createAt)
-		fmt.Println("ok")
+		stmt += "(?,?,?),"
+		rescInterface = append(rescInterface, value.id)
+		rescInterface = append(rescInterface, value.name)
+		rescInterface = append(rescInterface, value.createAt)
 	}
+
+	stmt = strings.TrimRight(stmt, ",")
+
+	_, err := db.Exec(stmt, rescInterface...)
+	fmt.Println(err)
 	return
 }
 
